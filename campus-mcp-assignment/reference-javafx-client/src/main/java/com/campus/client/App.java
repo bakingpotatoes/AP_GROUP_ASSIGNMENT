@@ -7,6 +7,7 @@ import com.campus.client.llm.OpenAiClient;
 import com.campus.client.mcp.CampusMcpClient;
 import com.campus.client.rag.RagService;
 import com.campus.client.ui.LoginPageController;
+import com.campus.client.ui.FacilityInfoController;
 //import com.campus.client.rag.RagService_old;
 import com.campus.client.ui.MainView;
 import javafx.application.Application;
@@ -81,7 +82,7 @@ public final class App extends Application {
         stage.show();
     }
     
-    static void setRoot(String fxml) {
+    public static void setRoot(String fxml) {
         try {
             rootScene.setRoot(loadFXML(fxml));
         } catch (IOException pageNotFound) {
@@ -177,6 +178,7 @@ public final class App extends Application {
              * 
              */
             LoginPageController.bind(mcp);
+            FacilityInfoController.bind(mcp);
             
             
             
@@ -240,6 +242,8 @@ public final class App extends Application {
 
     @Override
     public void stop() {
+        FacilityInfoController.shutdownSharedService();
+
         if (mcp != null) {
             mcp.close();
         }
