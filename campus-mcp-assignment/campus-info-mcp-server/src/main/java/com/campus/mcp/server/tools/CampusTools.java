@@ -303,11 +303,11 @@ public final class CampusTools {
                     System.out.println(1);
                     Map<String, Object> args = request.arguments();
                     System.out.println(2);
-                    String studentData = String.join(" | ", dataStore.getStudentDataById(str(args, "id").toUpperCase()));
-                    studentData = (studentData == null) ? 
+                    List<String> tmpstudentData = dataStore.getStudentDataById(str(args, "id").toUpperCase());
+                    String studentData = (tmpstudentData == null) ? 
                             String.format("NO STUDENT OF ID %s FOUND IN students.txt", str(args, "id"))
                             :
-                            studentData;
+                            String.join(" | ", tmpstudentData);
                     System.out.println(3);
                     return text(studentData);
                 })

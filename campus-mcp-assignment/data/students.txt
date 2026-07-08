@@ -1,1 +1,4 @@
 # ref | studentId | studentPassword | studentFName | studentMName | studentLName
+S-1|12345|Keith||Chan
+S-2|12345|Keith||Chan
+S-3|12345|Keith||Chan

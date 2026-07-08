@@ -182,7 +182,6 @@ public final class App extends Application {
             LoginPageController.bind(mcp);
             FacilityInfoController.bind(mcp);
             
-            
         } catch (Exception e) {
             /* This catch block is just to catch any and all exceptions, then reports where the error took place*/
             String[] errorMessage = {

@@ -23,7 +23,7 @@ public class DashboardPageController implements Initializable {
     
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // TODO
+        introLabel.setText("Welcome to your Dashboard, %s".formatted(LoginPageController.fullName));
     }
     
 }

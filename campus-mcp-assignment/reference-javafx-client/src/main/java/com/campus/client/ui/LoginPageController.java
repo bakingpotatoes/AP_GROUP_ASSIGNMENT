@@ -20,6 +20,7 @@ import javafx.fxml.Initializable;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
+import javafx.application.Platform;
 
 /*****************************************
 *   MODUS OPERANDI
@@ -38,6 +39,7 @@ import java.util.concurrent.ExecutorService;
 public class LoginPageController implements Initializable {
     private static CampusMcpClient mcp;
     private static boolean ran = false;
+    public static String fullName = "NULL";
     
     /*****************************************
     *   FXML event handlers and   
@@ -69,7 +71,24 @@ public class LoginPageController implements Initializable {
         if (mcp == null) {
             loginButton.setDisable(true);
             setErrorLabel("APPLICATION CLOSED\nClient not connected to server, please ensure that the server is running!");
+            return;
         }
+        
+        ExecutorService studentDataStoreWorker = Executors.newSingleThreadExecutor((runnable) -> { //"runnable" is the runnable object that is passed (using submit(runnable))
+            Thread thread = new Thread(runnable, "student-datastore-worker");
+            thread.setDaemon(true);
+            return thread;
+        });
+        
+        
+        studentDataStoreWorker.submit(() -> {
+            mcp.callTool("add_new_student", Map.of(
+                "password", "12345",
+                "fname", "Keith",
+                "lname", "Chan"
+            ));
+        });
+            
         
         
 /*======================================================================================================================================*
@@ -116,11 +135,6 @@ public class LoginPageController implements Initializable {
              *  This is to prevent the application from hanging if the main application has to literally wait for a response from the server
              *  ( <*> doesn't cut out the actual waiting time tho, just makes sure that the user can still interact with the UI whilst waiting for a response)
              */
-            ExecutorService studentDataStoreWorker = Executors.newSingleThreadExecutor((runnable) -> { //"runnable" is the runnable object that is passed (using submit(runnable))
-                Thread thread = new Thread(runnable, "student-datastore-worker");
-                thread.setDaemon(true);
-                return thread;
-            });
             
             /* The entirety of the verification process will occur here (within the daemon) */
             studentDataStoreWorker.submit(() -> {
@@ -128,7 +142,8 @@ public class LoginPageController implements Initializable {
                     /*First order of business is to see if the student id even exists*/
                     String studentData = mcp.callTool("get_student_data", Map.of("id", studentIdStr.toUpperCase()));
                     if (!studentData.contains("|")) { //none data store structure format (containing '|') means that there's no student found
-                        setErrorLabel("Incorrect student id or password!");
+                        
+                        Platform.runLater(() -> {setErrorLabel("Incorrect student id or password!");});
                         return;
                     }
                     
@@ -142,14 +157,15 @@ public class LoginPageController implements Initializable {
                     ));
                     
                     if (!studentPasswordStr.equals(dataTable.get("password"))) {
-                        setErrorLabel("Incorrect student id or password!");
+                        Platform.runLater(() -> {setErrorLabel("Incorrect student id or password!");});
                         return;
                     }
                     
+                    fullName = dataTable.get("fname") + dataTable.get("mname") + dataTable.get("lname");
                     App.setRoot("DashboardPage");
                     
                 } catch (Exception mcpRequestException) {
-                    setErrorLabel("The Client's connection to the server was broken");
+                    Platform.runLater(() -> {setErrorLabel("Something went wrong with the verification request");});
                     
                 }
             });
