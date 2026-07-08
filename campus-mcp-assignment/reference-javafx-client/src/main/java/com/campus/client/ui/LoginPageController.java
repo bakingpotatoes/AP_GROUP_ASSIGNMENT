@@ -37,6 +37,7 @@ import java.util.concurrent.ExecutorService;
 */
 public class LoginPageController implements Initializable {
     private static CampusMcpClient mcp;
+    private static boolean ran = false;
     
     /*****************************************
     *   FXML event handlers and   
@@ -54,20 +55,27 @@ public class LoginPageController implements Initializable {
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        studentIdInput.setPromptText("Student ID...");
-        studentPasswordInput.setPromptText("Student Account Password...");
+        studentIdInput.setPromptText("eg: S-123");
+        studentPasswordInput.setPromptText("eg: xxxxxxxxxxxx");
         
         /**
          *  Check if the connection was actually successful
+         *  -------------------------------------------------
+         *  If unsuccessful, it will disable the login button and will immediately tell the user that the client failed to connect to the server
          * 
          */
+        System.out.println("is MCP null? >> %b\n".formatted(mcp==null)
+                + "has bind ran before initialize? >> %b".formatted(ran));
+        if (mcp == null) {
+            loginButton.setDisable(true);
+            setErrorLabel("APPLICATION CLOSED\nClient not connected to server, please ensure that the server is running!");
+        }
         
         
-        
-        /**
-         *  Setting Login Button's action, will contain the entirety of the input validation and 
-         *  the getting of the student data, as well as the password and id matching (student account verification)
-         */
+/*======================================================================================================================================*
+ *  Setting Login Button's action, will contain the entirety of the input validation and 
+ *  the getting of the student data, as well as the password and id matching (student account verification)
+ *======================================================================================================================================*/
         loginButton.setOnAction(e -> {
             /**************************** Input Validator ****************************/
             List<String> errorMessage = new ArrayList<>();
@@ -117,11 +125,34 @@ public class LoginPageController implements Initializable {
             /* The entirety of the verification process will occur here (within the daemon) */
             studentDataStoreWorker.submit(() -> {
                 try { //try-catch statement in the case that something in the mcp fails midway through
+                    /*First order of business is to see if the student id even exists*/
+                    String studentData = mcp.callTool("get_student_data", Map.of("id", studentIdStr.toUpperCase()));
+                    if (!studentData.contains("|")) { //none data store structure format (containing '|') means that there's no student found
+                        setErrorLabel("Incorrect student id or password!");
+                        return;
+                    }
                     
-                } catch () {
+                    String[] tmpTable = studentData.split("\\s*\\|\\s*");
+                    Map<String, String> dataTable = new HashMap<>(Map.of(
+                            "id", tmpTable[0],
+                            "password", tmpTable[1],
+                            "fname", tmpTable[2],
+                            "mname", tmpTable[3],
+                            "lname", tmpTable[4]
+                    ));
+                    
+                    if (!studentPasswordStr.equals(dataTable.get("password"))) {
+                        setErrorLabel("Incorrect student id or password!");
+                        return;
+                    }
+                    
+                    App.setRoot("DashboardPage");
+                    
+                } catch (Exception mcpRequestException) {
+                    setErrorLabel("The Client's connection to the server was broken");
                     
                 }
-            })
+            });
             
         });
         
@@ -175,6 +206,7 @@ public class LoginPageController implements Initializable {
      */
     public static void bind(CampusMcpClient mcp) {
         LoginPageController.mcp = mcp;
+        ran = true;
     }
     
     

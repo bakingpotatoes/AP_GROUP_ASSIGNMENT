@@ -37,7 +37,9 @@ public final class CampusTools {
                 checkRoomAvailability(),
                 bookResource(),
                 listLecturerSlots(),
-                submitLeaveApplication());
+                submitLeaveApplication(),
+                addNewStudent(),
+                getStudentDataById());
     }
 
     // 1. RAG retrieval tool -------------------------------------------------
@@ -298,13 +300,15 @@ public final class CampusTools {
                         .inputSchema(jsonMapper, schema)
                         .build())
                 .callHandler((exchange, request) -> {
+                    System.out.println(1);
                     Map<String, Object> args = request.arguments();
-                    String studentData = String.join(" | ", dataStore.getStudentDataById(str(args, "id")));
+                    System.out.println(2);
+                    String studentData = String.join(" | ", dataStore.getStudentDataById(str(args, "id").toUpperCase()));
                     studentData = (studentData == null) ? 
                             String.format("NO STUDENT OF ID %s FOUND IN students.txt", str(args, "id"))
                             :
                             studentData;
-                    
+                    System.out.println(3);
                     return text(studentData);
                 })
                 .build();

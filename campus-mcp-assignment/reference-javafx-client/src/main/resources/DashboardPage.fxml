@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+
+<HBox minHeight="600.0" minWidth="800.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.campus.client.ui.DashboardPageController">
+   <children>
+      <VBox alignment="CENTER" spacing="50.0" HBox.hgrow="ALWAYS">
+         <children>
+            <Label fx:id="introLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="99.0" prefWidth="730.0" text="WELCOME, {NAME}" textAlignment="CENTER">
+               <font>
+                  <Font name="Lucida Fax Regular" size="29.0" />
+               </font>
+            </Label>
+            <Button fx:id="viewBookingsButton" minHeight="30.0" minWidth="400.0" mnemonicParsing="false" text="View Bookings" />
+            <Button fx:id="createBookingsButton" minHeight="30.0" minWidth="400.0" mnemonicParsing="false" text="Create Bookings" />
+            <Button fx:id="viewFacilitiesButton" minHeight="30.0" minWidth="400.0" mnemonicParsing="false" text="View Facilities Information" />
+            <Button fx:id="aiAssistantButton" minHeight="30.0" minWidth="400.0" mnemonicParsing="false" text="Go to AI Assistant" />
+            <Button fx:id="logoutButton" minHeight="30.0" minWidth="400.0" mnemonicParsing="false" style="-fx-font-weight: bold;" text="Log out" />
+         </children>
+      </VBox>
+   </children>
+</HBox>

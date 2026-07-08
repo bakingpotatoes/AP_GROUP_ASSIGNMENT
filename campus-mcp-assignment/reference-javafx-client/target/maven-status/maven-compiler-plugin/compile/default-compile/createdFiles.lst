@@ -1,11 +1,16 @@
 com\campus\client\mcp\CampusMcpClient.class
 com\campus\client\rag\RagService_old$RagResult.class
+com\campus\client\service\FacilityService.class
+com\campus\client\ui\DashboardPageController.class
 com\campus\client\rag\RagService$RagResult.class
+com\campus\client\ui\MainView.class
 com\campus\client\llm\AnthropicClient.class
 com\campus\client\llm\GeminiClient.class
+com\campus\client\ui\LoginPageController.class
 com\campus\client\App.class
 com\campus\client\Launcher.class
 com\campus\client\rag\RagService_old.class
 com\campus\client\rag\RagService.class
+com\campus\client\ui\FacilityInfoController.class
 com\campus\client\llm\OpenAiClient.class
 com\campus\client\llm\LlmClient.class

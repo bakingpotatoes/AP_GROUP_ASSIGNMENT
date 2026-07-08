@@ -65,9 +65,10 @@ public final class App extends Application {
     @Override
     public void start(Stage stage) {
         /* Establish connection BEFORE allowing the first controller class to be initialised */
-        Thread t = new Thread(this::bootstrap, "mcp-bootstrap"); //!!!ABSOLUTELY NECESSARY, bootstrap is a param-less 
-        t.setDaemon(true);
-        t.start();
+//        Thread t = new Thread(this::bootstrap, "mcp-bootstrap"); //!!!ABSOLUTELY NECESSARY, bootstrap is a param-less 
+//        t.setDaemon(true);
+//        t.start();
+        bootstrap();
         
         stage.setMinHeight(600);
         stage.setMinWidth(800);
@@ -167,6 +168,7 @@ public final class App extends Application {
                 llm = buildLlmClient(); //!!!ABSOLUTELY NECESSARY, USES THE API KEY and PROVIDER TO CONNECT TO THE LLM API, THEN SERVES AS THE INNER complete INTERFACE
                 
             } catch (Exception llmConnectionException) {
+                /* catches here if api key is missing or invalid */
                 llm = null;
                 throw llmConnectionException;
             }
@@ -179,7 +181,6 @@ public final class App extends Application {
              */
             LoginPageController.bind(mcp);
             FacilityInfoController.bind(mcp);
-            
             
             
         } catch (Exception e) {
