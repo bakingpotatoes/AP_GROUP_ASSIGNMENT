@@ -159,6 +159,82 @@ public final class CampusTools {
                 })
                 .build();
     }
+    
+    private SyncToolSpecification cancelBooking() {
+        String schema = """
+            {
+              "type": "object",
+              "properties": {
+                "booking_id": { "type": "string", "description": "room booking id to delete" }
+              },
+              "required": ["booking_id"]
+            }
+            """;
+        return SyncToolSpecification.builder()
+                .tool(Tool.builder()
+                        .name("cancel_booking")
+                        .description("Cancel room bookings, and returns a String of the cancelled booking")
+                        .inputSchema(jsonMapper, schema)
+                        .build())
+                .callHandler((exchange, request) -> {
+                    Map<String, Object> args = request.arguments();
+                    String bookingId = str(args, "booking_id");
+                    List<String> cancelledBookingData = dataStore.deleteBooking(bookingId);
+                    
+                    //if dataStore.deleteBooking returns a null, means it failed to find any booking with booking_id
+                    if (cancelledBookingData == null) return error("No such booking with booking id %s".formatted(bookingId.toUpperCase()));
+                    
+                    //otherwise, if the dataStore.deleteBooking did work, it'll return an ArrayList of strings of the attributes of the deleted data row
+                    //which is parsed as a string with " | " delimiters
+                    return text(String.join(" | ", cancelledBookingData));
+                    
+                })
+                .build();
+    }
+    
+    private SyncToolSpecification getRoomBookingByStudentId() {
+        String schema = """
+            {
+              "type": "object",
+              "properties": {
+                "student_id": { "type": "string", "description": "student id that booked the room(s)" }
+              },
+              "required": ["student_id"]
+            }
+            """;
+        return SyncToolSpecification.builder()
+                .tool(Tool.builder()
+                        .name("get_student_room_bookings")
+                        .description("Pass in the target student id, returns an ArrayList of full rows of booking data rows that are linked to that student's id")
+                        .inputSchema(jsonMapper, schema)
+                        .build())
+                .callHandler((exchange, request) -> {
+                    Map<String, Object> args = request.arguments();
+                    String studentId = str(args, "student_id");
+                    
+                    //temp store for the return results of dataStore.getAllBookings with an added filter (filter with student_id)
+                    List<String> bookingsData = new ArrayList<>();
+                    for (Map<String, String> booking : dataStore.getAllBookings()) {
+                        if (booking.get("student_id").equalsIgnoreCase(studentId)) {
+                            //internally creates a new String[] to be able to use the String.join(delimiter, String[]) method
+                            bookingsData.add(String.join(" | ", booking.values().toArray(String[]::new)));
+                        }
+                    }
+                    
+                    String fullName = String.join(" ", List.of(
+                        dataStore.getStudentDataById(studentId).get(2),
+                        dataStore.getStudentDataById(studentId).get(3),
+                        dataStore.getStudentDataById(studentId).get(4)
+                    ));
+                    
+                    //validating that bookingsData is empty or not, if it is empty, it means that there are no bookings linked to the student id
+                    //if there are bookings, that means the student has made bookings
+                    if (bookingsData.isEmpty()) return text("No bookings found under %s, Please make bookings first".formatted(fullName));
+                    return text(String.join(" | ", bookingsData));
+                    
+                })
+                .build();
+    }
 
     // 4. Lecturer slots -----------------------------------------------------
 
@@ -238,7 +314,7 @@ public final class CampusTools {
     }
     
     
-    // 6. Student related tools (addNewStudent ("add_new_student"), getStudentDataById ("get_student_data"), getAllStudentId ("get_student_ids"))
+    // 6. Student related tools (addNewStudent ("add_new_student"), getStudentDataById ("get_student_data"))
     
     /**
      *  THIS SHOULD HAVE NO ERRORS
@@ -313,6 +389,8 @@ public final class CampusTools {
                 })
                 .build();
     }
+    
+    // 7. 
 
     // ---- helpers ----------------------------------------------------------
 

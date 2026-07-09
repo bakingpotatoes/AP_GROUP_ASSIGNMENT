@@ -54,7 +54,7 @@ public final class DataStore {
             }
             if (Files.notExists(leaveFile)) {
                 Files.writeString(leaveFile,
-                        "# ref | studentId | fromDate | toDate | reason | createdAt\n");
+                        "# ref | studentId | fromDate | toDate | reason | createdAt\n"); //IGNORE
             }
             if(Files.notExists(studentsFile)) {
                 Files.writeString(studentsFile,
@@ -105,7 +105,8 @@ public final class DataStore {
     
     /**
      *  There should be no such thing as a "duplicate" student (student data with duplicate studentids), as AtomicInteger will deal with the student IDs for us
-     * 
+     *  
+     *  returns the student data in just a string
      */
     public synchronized String addStudent(String studentPassword, String studentFName, String studentMName, String studentLName) {
         String studentId = "S-" + (studentsSeq.incrementAndGet());
@@ -130,8 +131,10 @@ public final class DataStore {
 //    }
     
     /**
-     * returns a map of the entire row of that studentId
-     * (MAP CANNOT BE EMPTY)
+     *  gets students by their id
+     * 
+     *  returns an arraylist of strings of student attributes
+     *  returns null if no student was found
      */
     public synchronized List<String> getStudentDataById(String studentId) {
         List<String> studentDataMap = null;
@@ -153,32 +156,120 @@ public final class DataStore {
         
         return studentDataMap; //if the map is empty, that means the studentId row in students.txt couldn't be found, hence, a null is returned
     }
+    
+    
+    /**
+     * "Deletes" an entry from bookings.txt 
+     *  provided that we give the #ref id
+     * 
+     *  returns an ArrayList of String objects of the data row of the booking that was deleted, including "# ref"
+     *  return null if no booking with that bookingId was found
+     */
+    public synchronized List<String> deleteBooking(String bookingId) {
+        //this initial block checks if there is even a booking by bookingId
+        // if not, then it just returns null straight away
+        List<String> bookingData = null;
+        for (String line : readDataLines(bookingsFile)) {
+            if (line.contains("# ref")) continue;
+            bookingData = (bookingId.equalsIgnoreCase(line.split("\\s*\\|\\s*")[0])) 
+                    ? new ArrayList<>(Arrays.asList(line.split("\\s*\\|\\s*"))) : null;
+        }
+        
+        //no such booking id found
+        if (bookingData == null) return null;
+        
+        delete(bookingsFile, bookingId);
+        
+        return bookingData;
+    }
+    
+    
+    /**
+     *  Gets all the bookings
+     * 
+     *  returns an arraylist of map objects (map of attribute to value) for easier indexing later
+     *  returns null if no bookings were found
+     */
+    public synchronized List<Map<String, String>> getAllBookings() {
+        List<Map<String,String>> out = new ArrayList<>();
+        for (String line : readDataLines(bookingsFile)) {
+            if (line.contains("# ref")) continue;
+            
+            String[] parts = line.split("\\s*\\|\\s*");
+            Map<String, String> bookingDataRow = new HashMap<>(Map.of(
+                    "booking_id", parts[0],
+                    "resource_id", parts[1],
+                    "booking_date", parts[2],
+                    "booking_start_time", parts[3],
+                    "booking_end_time", parts[4],
+                    "student_id", parts[5],
+                    "created_datetime", parts[6]
+            ));
+            out.add(bookingDataRow);
+        }
+        
+        out = (out.isEmpty()) ? null : out;
+        return out;
+    }
 
+    
+    
+    
     // ---- low-level file helpers -----------------------------------------
     
     /**
      * ONLY DELETES FROM TEXT FILES IN SERVER'S DATA FOLDER, REQUIRES REF ID
      * 
-     * Essentially just replaces that row with * | * | * | *
+     * Essentially adds "*DELETED*" to the front of the # ref of that row
      * 
-     * 
+     * returns 0 if successfully "deleted" row
+     * returns 1 if failed to find matching ref
      */
-    private void delete(Path file, String ref) {
+    //CREATED BY KEITH
+    private int delete(Path file, String ref) {
+        //getting all the original lines from the target file...
         List<String> lines = readDataLines(file);
+        
         //store only the header row (assuming there is only one line)
+        String[] dataLines = new String[lines.size() - 1];
         String headerLine = lines.get(0);
         List<String> headerAttributes = new ArrayList<>(Arrays.asList(headerLine.split("\\s*\\|\\s*")));
         
         //store only the data rows (exclude header line) (initialisatino)
         String[][] dataMatrix = new String[lines.size() - 1][headerAttributes.size()];
         for (int row = 1; row < lines.size(); row++) {
-            String[] tmpDataFields = lines.get(row).split("\\s*\\|\\s*");
-            //assuming that we maintained "# ref" as the first field of each and every data text store
-            //will commence the "deletion" here, first check row[0] (# ref) for the correct data row, then append *DELETED* to REF_ID (*DELETED* REF_ID)
+            //populating the matrix...
+            dataMatrix[row] = lines.get(row).split("\\s*\\|\\s*");
             
+            //assuming that we maintained "# ref" as the first field of each and every data text store
+            //will commence the "deletion" here, first check dataMatrix[row][0] (# ref) for the correct data row, then append *DELETED* to REF_ID (*DELETED* REF_ID)
+            if (dataMatrix[row][0].equalsIgnoreCase(ref)) {
+                dataMatrix[row][0] = "*DELETED* " + dataMatrix[row][0];
+
+                //join the columns in the matrix back together with " | "...
+                for (String dataLine : dataLines) {
+                    dataLine = String.join(" | ", dataMatrix[row]);
+                }
+                
+                //finally, clear the file, and rewrite to it using append(...)
+                clear(file);
+                append(file, headerLine); //first appending the header...
+                for (String dataLine : dataLines) {
+                    append(file, dataLine);
+                }
+                
+                return 0; //0 means successfully deleted
+            }
         }
+        return 1; //1 means not found, don't change anything in the file...
     }
     
+    
+    
+    /**
+     *  Appends to the String "line" to the file on a new line
+     * 
+     */
     private void append(Path file, String line) {
         try {
             Files.writeString(file, line + System.lineSeparator(),
@@ -187,7 +278,26 @@ public final class DataStore {
             throw new UncheckedIOException(e);
         }
     }
-
+    
+    
+    /**
+     *  Literally clears all the text from a text file
+     * 
+     */
+    //CREATED BY KEITH
+    private void clear(Path file) {
+        try {
+            Files.write(file, new byte[0], StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    
+    
+    /**
+     *  Returns an arraylist of each line of the file (including the header)
+     * 
+     */
     private List<String> readDataLines(Path file) {
         try {
             List<String> lines = new ArrayList<>();
@@ -203,6 +313,10 @@ public final class DataStore {
         }
     }
     
+    /**
+     *  Returns the current number of newlines in the file
+     * 
+     */
     private int countDataLines(Path file) {
         return readDataLines(file).size();
     }
