@@ -80,14 +80,21 @@ public class LoginPageController implements Initializable {
             return thread;
         });
         
+        //just needed to do this once, uncomment this code to get the student data row back
         
-        studentDataStoreWorker.submit(() -> {
-            mcp.callTool("add_new_student", Map.of(
-                "password", "12345",
-                "fname", "Keith",
-                "lname", "Chan"
-            ));
-        });
+//        studentDataStoreWorker.submit(() -> {
+//            System.out.println(mcp.callTool("add_new_student", Map.of(
+//                "password", "12345",
+//                "fname", "Keith",
+//                "lname", "Chan"
+//            )));
+//            System.out.println(mcp.callTool("add_new_student", Map.of(
+//                "password", "12345",
+//                "fname", "Keith",
+//                "lname", "Chan"
+//            )));
+//            
+//        });
             
         
         

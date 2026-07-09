@@ -109,7 +109,7 @@ public final class DataStore {
      */
     public synchronized String addStudent(String studentPassword, String studentFName, String studentMName, String studentLName) {
         String studentId = "S-" + (studentsSeq.incrementAndGet());
-        String dataLine = String.join("|", studentId, studentPassword, studentFName, studentMName, studentLName);
+        String dataLine = String.join(" | ", studentId, studentPassword, studentFName, studentMName, studentLName);
         append(studentsFile, dataLine);
         return studentId;
         
@@ -155,7 +155,30 @@ public final class DataStore {
     }
 
     // ---- low-level file helpers -----------------------------------------
-
+    
+    /**
+     * ONLY DELETES FROM TEXT FILES IN SERVER'S DATA FOLDER, REQUIRES REF ID
+     * 
+     * Essentially just replaces that row with * | * | * | *
+     * 
+     * 
+     */
+    private void delete(Path file, String ref) {
+        List<String> lines = readDataLines(file);
+        //store only the header row (assuming there is only one line)
+        String headerLine = lines.get(0);
+        List<String> headerAttributes = new ArrayList<>(Arrays.asList(headerLine.split("\\s*\\|\\s*")));
+        
+        //store only the data rows (exclude header line) (initialisatino)
+        String[][] dataMatrix = new String[lines.size() - 1][headerAttributes.size()];
+        for (int row = 1; row < lines.size(); row++) {
+            String[] tmpDataFields = lines.get(row).split("\\s*\\|\\s*");
+            //assuming that we maintained "# ref" as the first field of each and every data text store
+            //will commence the "deletion" here, first check row[0] (# ref) for the correct data row, then append *DELETED* to REF_ID (*DELETED* REF_ID)
+            
+        }
+    }
+    
     private void append(Path file, String line) {
         try {
             Files.writeString(file, line + System.lineSeparator(),
@@ -169,6 +192,7 @@ public final class DataStore {
         try {
             List<String> lines = new ArrayList<>();
             for (String l : Files.readAllLines(file, StandardCharsets.UTF_8)) {
+                if (l.toLowerCase().contains("*deleted*")) continue; //ignores deleted data
                 if (!l.isBlank() && !l.startsWith("#")) {
                     lines.add(l);
                 }
