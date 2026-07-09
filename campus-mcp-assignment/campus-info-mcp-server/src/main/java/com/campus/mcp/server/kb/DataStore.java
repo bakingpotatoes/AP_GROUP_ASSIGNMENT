@@ -140,7 +140,7 @@ public final class DataStore {
         List<String> studentDataMap = null;
         for (String line : readDataLines(studentsFile)) {
             String[] parts = line.split("\\s*\\|\\s*");
-            if (parts[0].equalsIgnoreCase(studentId)) continue;
+            if (!parts[0].equalsIgnoreCase(studentId)) continue;
             //there should only be one instance of a student data row with the studentId
             //mapping here
             studentDataMap = new ArrayList<>(List.of(

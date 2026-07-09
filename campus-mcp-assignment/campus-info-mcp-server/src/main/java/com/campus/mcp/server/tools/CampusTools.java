@@ -30,7 +30,12 @@ public final class CampusTools {
         this.dataStore = dataStore;
         this.jsonMapper = jsonMapper;
     }
-
+    
+    
+    /**
+     * MUST LIST ALL THE METHODS FROM THIS FILE HERE
+     * 
+     */
     public List<SyncToolSpecification> all() {
         return List.of(
                 searchCampusInfo(),
@@ -39,7 +44,9 @@ public final class CampusTools {
                 listLecturerSlots(),
                 submitLeaveApplication(),
                 addNewStudent(),
-                getStudentDataById());
+                getStudentDataById(),
+                cancelBooking(),
+                getRoomBookingByStudentId());
     }
 
     // 1. RAG retrieval tool -------------------------------------------------
@@ -122,8 +129,53 @@ public final class CampusTools {
                 })
                 .build();
     }
+    
+    
+    private SyncToolSpecification getRoomBookingByStudentId() {
+        String schema = """
+            {
+              "type": "object",
+              "properties": {
+                "student_id": { "type": "string", "description": "student id that booked the room(s)" }
+              },
+              "required": ["student_id"]
+            }
+            """;
+        return SyncToolSpecification.builder()
+                .tool(Tool.builder()
+                        .name("get_student_room_bookings")
+                        .description("Pass in the target student id, returns an ArrayList of full rows of booking data rows that are linked to that student's id")
+                        .inputSchema(jsonMapper, schema)
+                        .build())
+                .callHandler((exchange, request) -> {
+                    Map<String, Object> args = request.arguments();
+                    String studentId = str(args, "student_id");
+                    
+                    //temp store for the return results of dataStore.getAllBookings with an added filter (filter with student_id)
+                    List<String> bookingsData = new ArrayList<>();
+                    for (Map<String, String> booking : dataStore.getAllBookings()) {
+                        if (booking.get("student_id").equalsIgnoreCase(studentId)) {
+                            //internally creates a new String[] to be able to use the String.join(delimiter, String[]) method
+                            bookingsData.add(String.join(" | ", booking.values().toArray(String[]::new)));
+                        }
+                    }
+                    
+                    String fullName = String.join(" ", List.of(
+                        dataStore.getStudentDataById(studentId).get(2),
+                        dataStore.getStudentDataById(studentId).get(3),
+                        dataStore.getStudentDataById(studentId).get(4)
+                    ));
+                    
+                    //validating that bookingsData is empty or not, if it is empty, it means that there are no bookings linked to the student id
+                    //if there are bookings, that means the student has made bookings
+                    if (bookingsData.isEmpty()) return text("No bookings found under %s, Please make bookings first".formatted(fullName));
+                    return text(String.join(" | ", bookingsData));
+                    
+                })
+                .build();
+    }
 
-    // 3. Book a resource ----------------------------------------------------
+    // 3. Book/Cancel a resource ----------------------------------------------------
 
     private SyncToolSpecification bookResource() {
         String schema = """
@@ -187,50 +239,6 @@ public final class CampusTools {
                     //otherwise, if the dataStore.deleteBooking did work, it'll return an ArrayList of strings of the attributes of the deleted data row
                     //which is parsed as a string with " | " delimiters
                     return text(String.join(" | ", cancelledBookingData));
-                    
-                })
-                .build();
-    }
-    
-    private SyncToolSpecification getRoomBookingByStudentId() {
-        String schema = """
-            {
-              "type": "object",
-              "properties": {
-                "student_id": { "type": "string", "description": "student id that booked the room(s)" }
-              },
-              "required": ["student_id"]
-            }
-            """;
-        return SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("get_student_room_bookings")
-                        .description("Pass in the target student id, returns an ArrayList of full rows of booking data rows that are linked to that student's id")
-                        .inputSchema(jsonMapper, schema)
-                        .build())
-                .callHandler((exchange, request) -> {
-                    Map<String, Object> args = request.arguments();
-                    String studentId = str(args, "student_id");
-                    
-                    //temp store for the return results of dataStore.getAllBookings with an added filter (filter with student_id)
-                    List<String> bookingsData = new ArrayList<>();
-                    for (Map<String, String> booking : dataStore.getAllBookings()) {
-                        if (booking.get("student_id").equalsIgnoreCase(studentId)) {
-                            //internally creates a new String[] to be able to use the String.join(delimiter, String[]) method
-                            bookingsData.add(String.join(" | ", booking.values().toArray(String[]::new)));
-                        }
-                    }
-                    
-                    String fullName = String.join(" ", List.of(
-                        dataStore.getStudentDataById(studentId).get(2),
-                        dataStore.getStudentDataById(studentId).get(3),
-                        dataStore.getStudentDataById(studentId).get(4)
-                    ));
-                    
-                    //validating that bookingsData is empty or not, if it is empty, it means that there are no bookings linked to the student id
-                    //if there are bookings, that means the student has made bookings
-                    if (bookingsData.isEmpty()) return text("No bookings found under %s, Please make bookings first".formatted(fullName));
-                    return text(String.join(" | ", bookingsData));
                     
                 })
                 .build();
