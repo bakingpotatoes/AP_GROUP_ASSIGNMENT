@@ -85,7 +85,7 @@ public final class CampusTools {
                 .build();
     }
 
-    // 2. Room availability --------------------------------------------------
+    // 2. Room availability / Get room booking by student id --------------------------------------------------
 
     private SyncToolSpecification checkRoomAvailability() {
         String schema = """
