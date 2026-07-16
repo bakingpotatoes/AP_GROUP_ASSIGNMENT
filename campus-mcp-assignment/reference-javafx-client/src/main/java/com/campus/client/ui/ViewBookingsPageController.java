@@ -22,11 +22,11 @@ import javafx.geometry.Pos;
         
         
 public class ViewBookingsPageController implements Initializable {
-    private static CampusMcpClient mcp;
+    public static CampusMcpClient mcp;
     private static List<Map<String, String>> allBookings = new ArrayList<>();
     private static List<BookingBlock> allBookingBlocks = new ArrayList<>();
     
-    ExecutorService bookingDataStoreWorker = Executors.newSingleThreadExecutor((runnable) -> { //"runnable" is the runnable object that is passed (using submit(runnable))
+    public static ExecutorService bookingDataStoreWorker = Executors.newSingleThreadExecutor((runnable) -> { //"runnable" is the runnable object that is passed (using submit(runnable))
         Thread thread = new Thread(runnable, "bookings-datastore-worker");
         thread.setDaemon(true);
         return thread;
@@ -85,7 +85,7 @@ public class ViewBookingsPageController implements Initializable {
                     //mapping the split parts into its easier to access map objects
                     allBookings.add(Map.of(
                             "booking_id", parts[0],
-                            "room_id", parts[4],
+                            "room_id", parts[3],
                             "start_date", parts[2],
                             "start_time", parts[5],
                             "end_time", parts[1],
@@ -174,29 +174,27 @@ class BookingBlock {
     private Pane createBbUi() {
         // 1. Root Container (Top-to-Bottom flow)
         VBox mainFrame = new VBox();
-        double targetWidth = parentWidthHeight[0] * 0.75; // Fix: 0.75 instead of 3/4
-        mainFrame.setPrefWidth(targetWidth);
-        mainFrame.setMaxWidth(targetWidth);
+        mainFrame.setMaxWidth(Double.MAX_VALUE);  // Allow full width expansion
 
         // ==========================================
         // 2. TOP SECTION (Darker Green Background)
         // ==========================================
         HBox topSection = new HBox();
-        // Use background-radius to only round the TOP corners (15px top-left, 15px top-right, 0, 0)
+        topSection.setMaxWidth(Double.MAX_VALUE);  // Fill parent width
         topSection.setStyle("-fx-background-color: #A9D18E; -fx-background-radius: 15 15 0 0; -fx-padding: 20;");
         topSection.setSpacing(20);
 
         // Top Left Column
         VBox topLeft = new VBox(5); 
-        Label lblLeft1 = new Label("Text 1 : Lorem ipsum");
-        Label lblLeft2 = new Label("Text 2: asfasdfad");
-        Label lblLeft3 = new Label("Text 3: DFdfsdfsdf");
+        Label lblLeft1 = new Label("Booking ID : %s".formatted(this.bookingId));
+        Label lblLeft2 = new Label("Room ID    : %s".formatted(this.roomId));
+        Label lblLeft3 = new Label();
 
         // Top Right Column
         VBox topRight = new VBox(5);
-        Label lblRight1 = new Label("Text 1 : Lorem ipsum");
-        Label lblRight2 = new Label("Text 2: asfasdfad");
-        Label lblRight3 = new Label("Text 3: DFdfsdfsdf");
+        Label lblRight1 = new Label("Start Date : %s".formatted(this.startDate));
+        Label lblRight2 = new Label("Start Time : %s".formatted(this.startTime));
+        Label lblRight3 = new Label("End Time   : %s".formatted(this.endTime));
 
         // Make all top text bold and larger to match the image
         String topTextStyle = "-fx-font-weight: bold; -fx-font-size: 15px;";
@@ -218,22 +216,21 @@ class BookingBlock {
         // 3. BOTTOM SECTION (Lighter Green Background)
         // ==========================================
         HBox bottomSection = new HBox();
-        // Round the BOTTOM corners (0, 0, 15px bottom-right, 15px bottom-left)
+        bottomSection.setMaxWidth(Double.MAX_VALUE);  // Fill parent width
         bottomSection.setStyle("-fx-background-color: #C5E0B4; -fx-background-radius: 0 0 15 15; -fx-padding: 15 20 15 20;");
         bottomSection.setAlignment(Pos.CENTER_LEFT);
 
         // Bottom Left Column (Contains Delete Button)
         HBox bottomLeft = new HBox();
         Button deleteBookingButton = new Button("DELETE");
-        // Style the red button with rounded corners and bold white text
-        deleteBookingButton.setStyle("-fx-background-color: #C00000; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 12; -fx-padding: 8 20 8 20; -fx-cursor: hand;");
+        deleteBookingButton.setStyle("-fx-background-color: #C00000; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 12; -fx-padding: 8 20 8 20;");
         deleteBookingButton.setOnAction(e -> this.deleteBbUi());
         bottomLeft.getChildren().add(deleteBookingButton);
 
         // Bottom Right Column (Contains Text 4)
         HBox bottomRight = new HBox();
         bottomRight.setAlignment(Pos.CENTER_LEFT);
-        Label lblBottomRight = new Label("Text 4: somethingSomething");
+        Label lblBottomRight = new Label("Created On : %s".formatted(String.join(", ", this.creationDateTime.split("T"))));
         lblBottomRight.setStyle("-fx-font-size: 14px;");
         bottomRight.getChildren().add(lblBottomRight);
 
@@ -259,7 +256,10 @@ class BookingBlock {
      *  Finally, reloads the page
      */
     private void deleteBbUi() {
-        System.out.println("\n\n" + this.bookingId + "\n\n");
+        ViewBookingsPageController.bookingDataStoreWorker.submit(() -> {
+            System.out.println("\n\n" + ViewBookingsPageController.mcp.callTool("cancel_booking", Map.of("booking_id", this.bookingId.toUpperCase())) + "\n\n");
+            App.setRoot("ViewBookingsPage");
+        });
     }
     
 }
