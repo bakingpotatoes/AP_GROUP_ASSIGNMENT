@@ -1,4 +1,5 @@
 com\campus\client\mcp\CampusMcpClient.class
+com\campus\client\ui\BookingBlock.class
 com\campus\client\rag\RagService_old$RagResult.class
 com\campus\client\service\FacilityService.class
 com\campus\client\ui\DashboardPageController.class

@@ -7,10 +7,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-
 <HBox minHeight="600.0" minWidth="800.0" prefWidth="902.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.campus.client.ui.ViewBookingsPageController">
    <children>
-      <VBox alignment="TOP_CENTER" spacing="20.0" HBox.hgrow="ALWAYS">
+      <VBox alignment="TOP_CENTER" spacing="10.0" HBox.hgrow="ALWAYS">
          <children>
             <HBox alignment="CENTER_LEFT" minHeight="10.0" prefHeight="47.0" prefWidth="902.0" spacing="20.0" style="-fx-background-color: gray; -fx-padding: 20;" VBox.vgrow="NEVER">
                <children>
@@ -28,6 +27,7 @@
                </content>
             </ScrollPane>
             <Label fx:id="alertLabel" alignment="CENTER" contentDisplay="TOP" prefHeight="18.0" prefWidth="579.0" text="PLACEHOLDER ALERT TEXT" />
+            <Button fx:id="createNewBookingButton" mnemonicParsing="false" text="Create New Booking" />
          </children>
       </VBox>
    </children>

@@ -160,16 +160,27 @@ public final class CampusTools {
                         }
                     }
                     
-                    String fullName = String.join(" ", List.of(
-                        dataStore.getStudentDataById(studentId).get(2),
-                        dataStore.getStudentDataById(studentId).get(3),
-                        dataStore.getStudentDataById(studentId).get(4)
-                    ));
+                    //this block is to find the student's name to tell which student doesn't have a booking
+                    // if there is no name (the student doesn't exist yet during testing or whatever reason), it will just return the requested studentId
+                    String fullName = studentId;
+                    try {
+                        fullName = String.join(" ", List.of(
+                            dataStore.getStudentDataById(studentId).get(2),
+                            dataStore.getStudentDataById(studentId).get(3),
+                            dataStore.getStudentDataById(studentId).get(4)
+                        ));
+                    } catch (NullPointerException e) {
+                        System.err.println("\n\n" + "[ERROR] Student of id %s doesn't exist in students.txt".formatted(studentId) + "\n\n");
+                    }
+                    
                     
                     //validating that bookingsData is empty or not, if it is empty, it means that there are no bookings linked to the student id
                     //if there are bookings, that means the student has made bookings
-                    if (bookingsData.isEmpty()) return text("No bookings found under %s, Please make bookings first".formatted(fullName));
-                    return text(String.join(" | ", bookingsData));
+                    if (bookingsData.isEmpty()) {
+                        System.err.println("\n\n" + "[ERROR] Student of id %s doesn't have a booking in bookings.txt".formatted(studentId) + "\n\n");
+                        return text("No bookings found under %s, Please make bookings first".formatted(fullName));
+                    }
+                    return text(String.join("\n", bookingsData));
                     
                 })
                 .build();

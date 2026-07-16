@@ -39,7 +39,8 @@ import javafx.application.Platform;
 public class LoginPageController implements Initializable {
     private static CampusMcpClient mcp;
     private static boolean ran = false;
-    public static String fullName = "NULL";
+    public static String fullName;
+    public static String studentId;
     
     /*****************************************
     *   FXML event handlers and   
@@ -167,6 +168,9 @@ public class LoginPageController implements Initializable {
                         Platform.runLater(() -> {setErrorLabel("Incorrect student id or password!");});
                         return;
                     }
+                    
+                    //into this point, the login is successful
+                    studentId = studentIdInput.getText();
                     String[] fullNameInParts = {dataTable.get("fname"), dataTable.get("mname"), dataTable.get("lname")};
                     fullName = (dataTable.get("mname").isBlank()) ? String.join(" ", List.of(fullNameInParts[0], fullNameInParts[2])) : 
                             String.join(" ", List.of(fullNameInParts[0], fullNameInParts[1], fullNameInParts[2]));
