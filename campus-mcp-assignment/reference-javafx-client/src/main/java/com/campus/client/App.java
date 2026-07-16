@@ -88,7 +88,8 @@ public final class App extends Application {
         try {
             rootScene.setRoot(loadFXML(fxml));
         } catch (IOException pageNotFound) {
-            System.err.println(String.format("No FXML file such as \"%s\" was found! Aborting setRoot", fxml));
+            System.err.println(String.format("\n\nNo FXML file such as \"%s\" was found! Aborting setRoot", fxml));
+            pageNotFound.printStackTrace();
         } 
         
     }

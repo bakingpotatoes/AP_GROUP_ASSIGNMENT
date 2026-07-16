@@ -170,6 +170,7 @@ public class LoginPageController implements Initializable {
                     }
                     
                     //into this point, the login is successful
+                    //
                     studentId = studentIdInput.getText();
                     String[] fullNameInParts = {dataTable.get("fname"), dataTable.get("mname"), dataTable.get("lname")};
                     fullName = (dataTable.get("mname").isBlank()) ? String.join(" ", List.of(fullNameInParts[0], fullNameInParts[2])) : 

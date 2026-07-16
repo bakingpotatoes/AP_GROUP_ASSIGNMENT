@@ -35,7 +35,7 @@ public class ViewBookingsPageController implements Initializable {
     @FXML
     Label alertLabel;
     @FXML
-    static Pane bookingsVBox;
+    Pane bookingsVBox;
     
     
     @Override
@@ -51,22 +51,7 @@ public class ViewBookingsPageController implements Initializable {
            App.setRoot("BookResourcePage");
         });
         
-        //refreshes everytime the user comes back to this page
-        //coming back to this page can also act as a refresh on deletion of a room booking
-        bookingDataStoreWorker.submit(() -> {
-            try {
-                //This try block is dedicated to initialising a bunch of booking blocks into bookingsVBox pane
-                //inside a worker thread as it calls a server method and accesses its data store
-                String bookingDataBasedOnStudentId = mcp.callTool("get_student_room_bookings", Map.of(
-                        "student_id", "03456789".toUpperCase()
-                ));
-                System.out.println("\n\n" + bookingDataBasedOnStudentId + "\n\n");
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.err.println("\n\n" + "something wrong in the backend" + "\n\n");
-            }
-        });
-        
+        initialiseBookingBlocks();
     }
     
     
@@ -101,6 +86,8 @@ public class ViewBookingsPageController implements Initializable {
                             "created_datetime", parts[5]
                     ));
                 }
+                
+                System.out.println("\n\n" + String.join("\n", rawBookingsParts));
                 
             } catch (Exception e) {
                 e.printStackTrace();
