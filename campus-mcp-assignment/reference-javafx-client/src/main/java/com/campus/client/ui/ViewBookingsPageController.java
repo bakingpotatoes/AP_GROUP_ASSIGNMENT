@@ -28,13 +28,13 @@ public class ViewBookingsPageController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        ExecutorService studentDataStoreWorker = Executors.newSingleThreadExecutor((runnable) -> { //"runnable" is the runnable object that is passed (using submit(runnable))
+        ExecutorService bookingDataStoreWorker = Executors.newSingleThreadExecutor((runnable) -> { //"runnable" is the runnable object that is passed (using submit(runnable))
             Thread thread = new Thread(runnable, "bookings-datastore-worker");
             thread.setDaemon(true);
             return thread;
         });
         
-        studentDataStoreWorker.submit(() -> {
+        bookingDataStoreWorker.submit(() -> {
             try {
                 String bookingDataBasedOnStudentId = mcp.callTool("get_student_room_bookings", Map.of(
                         "student_id", "03456789".toUpperCase()
