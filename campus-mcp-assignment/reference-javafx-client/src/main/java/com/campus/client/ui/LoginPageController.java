@@ -167,8 +167,9 @@ public class LoginPageController implements Initializable {
                         Platform.runLater(() -> {setErrorLabel("Incorrect student id or password!");});
                         return;
                     }
-                    
-                    fullName = dataTable.get("fname") + dataTable.get("mname") + dataTable.get("lname");
+                    String[] fullNameInParts = {dataTable.get("fname"), dataTable.get("mname"), dataTable.get("lname")};
+                    fullName = (dataTable.get("mname").isBlank()) ? String.join(" ", List.of(fullNameInParts[0], fullNameInParts[2])) : 
+                            String.join(" ", List.of(fullNameInParts[0], fullNameInParts[1], fullNameInParts[2]));
                     App.setRoot("DashboardPage");
                     
                 } catch (Exception mcpRequestException) {

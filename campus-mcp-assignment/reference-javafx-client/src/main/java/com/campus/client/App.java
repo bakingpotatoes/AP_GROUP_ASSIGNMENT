@@ -10,6 +10,7 @@ import com.campus.client.ui.LoginPageController;
 import com.campus.client.ui.FacilityInfoController;
 //import com.campus.client.rag.RagService_old;
 import com.campus.client.ui.MainView;
+import com.campus.client.ui.ViewBookingsPageController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -181,6 +182,7 @@ public final class App extends Application {
              */
             LoginPageController.bind(mcp);
             FacilityInfoController.bind(mcp);
+            ViewBookingsPageController.bind(mcp);
             
         } catch (Exception e) {
             /* This catch block is just to catch any and all exceptions, then reports where the error took place*/
