@@ -13,10 +13,12 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.time.*;
+import javafx.application.Platform;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.geometry.Pos;
         
         
 public class ViewBookingsPageController implements Initializable {
@@ -35,7 +37,7 @@ public class ViewBookingsPageController implements Initializable {
     @FXML
     Label alertLabel;
     @FXML
-    Pane bookingsVBox;
+    VBox bookingsVBox;
     
     
     @Override
@@ -71,45 +73,55 @@ public class ViewBookingsPageController implements Initializable {
         //populating the allBookings list (worker thread)
         bookingDataStoreWorker.submit(() -> {
             try {
+                //The raw string that the CampusTool method returns (has \n delimiters)
                 String rawBookingsText = mcp.callTool("get_student_room_bookings", Map.of("student_id", LoginPageController.studentId.toUpperCase()));
+                //splitting the raw text into entries (delimited by " | ")
                 String[] rawBookingsParts = rawBookingsText.split("\\n");
                 
+                System.out.println("\n\n" + String.join("\n", rawBookingsParts) + "\n\n");
+                
                 for (String rawBookingPart : rawBookingsParts) {
-                    String[] parts = rawBookingPart.split("\\s*|\\s*");
+                    String[] parts = rawBookingPart.split("\\s*\\|\\s*");
                     //mapping the split parts into its easier to access map objects
                     allBookings.add(Map.of(
                             "booking_id", parts[0],
-                            "room_id", parts[1],
+                            "room_id", parts[4],
                             "start_date", parts[2],
-                            "start_time", parts[3],
-                            "end_time", parts[4],
-                            "created_datetime", parts[5]
+                            "start_time", parts[5],
+                            "end_time", parts[1],
+                            "created_datetime", parts[6]
                     ));
                 }
                 
-                System.out.println("\n\n" + String.join("\n", rawBookingsParts));
+//                System.out.println("\n\n" + String.join("\n", rawBookingsParts));
+                
+                
+                //populate the allBookingBlocks list (main JavaFX application thread)
+                for (Map<String, String> bookingInfo : allBookings) {
+                    allBookingBlocks.add(new BookingBlock(
+                            bookingInfo.get("booking_id"),
+                            bookingInfo.get("room_id"),
+                            bookingInfo.get("start_date"),
+                            bookingInfo.get("start_time"),
+                            bookingInfo.get("end_time"),
+                            bookingInfo.get("created_datetime")
+                    ));
+                }
+                
+                System.out.println("\n\n" + allBookings + "\n\n");
+                
+                Platform.runLater(() -> {
+                    //add the BookingBlocks to the scene in javafx (accessing BookingBlock's instance UI member)
+                    for (BookingBlock bb : allBookingBlocks) {
+                        bookingsVBox.getChildren().add(bb.UI);
+                    }
+                });
+                
                 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
-        
-        //populate the allBookingBlocks list (main JavaFX application thread)
-        for (Map<String, String> bookingInfo : allBookings) {
-            allBookingBlocks.add(new BookingBlock(
-                    bookingInfo.get("booking_id"),
-                    bookingInfo.get("room_id"),
-                    bookingInfo.get("start_date"),
-                    bookingInfo.get("start_time"),
-                    bookingInfo.get("end_time"),
-                    bookingInfo.get("created_datetime")
-            ));
-        }
-        
-        //add the BookingBlocks to the scene in javafx (accessing BookingBlock's instance UI member)
-        for (BookingBlock bb : allBookingBlocks) {
-            bookingsVBox.getChildren().add(bb.UI);
-        }
         
     }
     
@@ -125,30 +137,31 @@ class BookingBlock {
     
     public String bookingId;
     public String roomId;
-    public LocalDate startDate;
-    public LocalTime startTime;
-    public LocalTime endTime;
-    public LocalDateTime creationDateTime;
+    public String startDate;
+    public String startTime;
+    public String endTime;
+    public String creationDateTime;
     public Pane UI;
     
     //hiding the default ctor
     private BookingBlock() {};
     
     
-    public BookingBlock(String bookingId, String roomId, Object...dateTimeInfo) {
-        if (dateTimeInfo.length != 3) {
+    public BookingBlock(String bookingId, String roomId, String...dateTimeInfo) {
+        if (dateTimeInfo.length != 4) {
             try {
-                throw new Error("DateTimeInfo must contain the startdate, starttime, and endtime");
+                throw new Error("DateTimeInfo must contain the startdate, starttime, endtime, creationdatetime");
             } catch (Error e) {
                 e.printStackTrace();
+                System.exit(1);
             }
         }
         this.bookingId = bookingId;
         this.roomId = roomId;
-        this.startDate = (LocalDate) dateTimeInfo[0];
-        this.startTime = (LocalTime) dateTimeInfo[1];
-        this.endTime = (LocalTime) dateTimeInfo[2];
-        this.creationDateTime = (LocalDateTime) dateTimeInfo[3];
+        this.startDate = dateTimeInfo[0];
+        this.startTime = dateTimeInfo[1];
+        this.endTime = dateTimeInfo[2];
+        this.creationDateTime = dateTimeInfo[3];
         this.UI = createBbUi();
     }
     
@@ -159,14 +172,84 @@ class BookingBlock {
     *   TESTING
     */
     private Pane createBbUi() {
-        HBox mainFrame = new HBox();
-        Button deleteBookingButton = new Button("Delete Booking");
+        // 1. Root Container (Top-to-Bottom flow)
+        VBox mainFrame = new VBox();
+        double targetWidth = parentWidthHeight[0] * 0.75; // Fix: 0.75 instead of 3/4
+        mainFrame.setPrefWidth(targetWidth);
+        mainFrame.setMaxWidth(targetWidth);
+
+        // ==========================================
+        // 2. TOP SECTION (Darker Green Background)
+        // ==========================================
+        HBox topSection = new HBox();
+        // Use background-radius to only round the TOP corners (15px top-left, 15px top-right, 0, 0)
+        topSection.setStyle("-fx-background-color: #A9D18E; -fx-background-radius: 15 15 0 0; -fx-padding: 20;");
+        topSection.setSpacing(20);
+
+        // Top Left Column
+        VBox topLeft = new VBox(5); 
+        Label lblLeft1 = new Label("Text 1 : Lorem ipsum");
+        Label lblLeft2 = new Label("Text 2: asfasdfad");
+        Label lblLeft3 = new Label("Text 3: DFdfsdfsdf");
+
+        // Top Right Column
+        VBox topRight = new VBox(5);
+        Label lblRight1 = new Label("Text 1 : Lorem ipsum");
+        Label lblRight2 = new Label("Text 2: asfasdfad");
+        Label lblRight3 = new Label("Text 3: DFdfsdfsdf");
+
+        // Make all top text bold and larger to match the image
+        String topTextStyle = "-fx-font-weight: bold; -fx-font-size: 15px;";
+        lblLeft1.setStyle(topTextStyle); lblLeft2.setStyle(topTextStyle); lblLeft3.setStyle(topTextStyle);
+        lblRight1.setStyle(topTextStyle); lblRight2.setStyle(topTextStyle); lblRight3.setStyle(topTextStyle);
+
+        topLeft.getChildren().addAll(lblLeft1, lblLeft2, lblLeft3);
+        topRight.getChildren().addAll(lblRight1, lblRight2, lblRight3);
+
+        // Force columns to split space exactly 50/50
+        HBox.setHgrow(topLeft, Priority.ALWAYS);
+        HBox.setHgrow(topRight, Priority.ALWAYS);
+        topLeft.setMaxWidth(Double.MAX_VALUE);
+        topRight.setMaxWidth(Double.MAX_VALUE);
+
+        topSection.getChildren().addAll(topLeft, topRight);
+
+        // ==========================================
+        // 3. BOTTOM SECTION (Lighter Green Background)
+        // ==========================================
+        HBox bottomSection = new HBox();
+        // Round the BOTTOM corners (0, 0, 15px bottom-right, 15px bottom-left)
+        bottomSection.setStyle("-fx-background-color: #C5E0B4; -fx-background-radius: 0 0 15 15; -fx-padding: 15 20 15 20;");
+        bottomSection.setAlignment(Pos.CENTER_LEFT);
+
+        // Bottom Left Column (Contains Delete Button)
+        HBox bottomLeft = new HBox();
+        Button deleteBookingButton = new Button("DELETE");
+        // Style the red button with rounded corners and bold white text
+        deleteBookingButton.setStyle("-fx-background-color: #C00000; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 12; -fx-padding: 8 20 8 20; -fx-cursor: hand;");
         deleteBookingButton.setOnAction(e -> this.deleteBbUi());
-        mainFrame.setMinSize(parentWidthHeight[0], 30);
-        mainFrame.getChildren().add(deleteBookingButton);
-        
-        
-        
+        bottomLeft.getChildren().add(deleteBookingButton);
+
+        // Bottom Right Column (Contains Text 4)
+        HBox bottomRight = new HBox();
+        bottomRight.setAlignment(Pos.CENTER_LEFT);
+        Label lblBottomRight = new Label("Text 4: somethingSomething");
+        lblBottomRight.setStyle("-fx-font-size: 14px;");
+        bottomRight.getChildren().add(lblBottomRight);
+
+        // Force bottom columns to split 50/50 so they perfectly align with the top columns
+        HBox.setHgrow(bottomLeft, Priority.ALWAYS);
+        HBox.setHgrow(bottomRight, Priority.ALWAYS);
+        bottomLeft.setMaxWidth(Double.MAX_VALUE);
+        bottomRight.setMaxWidth(Double.MAX_VALUE);
+
+        bottomSection.getChildren().addAll(bottomLeft, bottomRight);
+
+        // ==========================================
+        // 4. ASSEMBLE
+        // ==========================================
+        mainFrame.getChildren().addAll(topSection, bottomSection);
+
         return mainFrame;
     }
     
@@ -176,7 +259,7 @@ class BookingBlock {
      *  Finally, reloads the page
      */
     private void deleteBbUi() {
-        
+        System.out.println("\n\n" + this.bookingId + "\n\n");
     }
     
 }

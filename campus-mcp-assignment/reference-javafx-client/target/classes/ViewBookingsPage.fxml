@@ -21,9 +21,9 @@
                   <Font name="System Bold" size="41.0" />
                </font>
             </Label>
-            <ScrollPane hbarPolicy="NEVER" maxHeight="400.0" maxWidth="700.0" minHeight="300.0" minWidth="700.0" prefHeight="358.0" prefWidth="766.0" style="-fx-background-color: grey;" VBox.vgrow="ALWAYS">
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" maxHeight="400.0" maxWidth="700.0" minHeight="300.0" minWidth="700.0" prefHeight="358.0" prefWidth="766.0" style="-fx-background-color: grey;" VBox.vgrow="ALWAYS">
                <content>
-                  <VBox fx:id="bookingsVBox" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="700.0" prefWidth="700.0" />
+                  <VBox fx:id="bookingsVBox" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="700.0" prefWidth="700.0" spacing="30.0" />
                </content>
             </ScrollPane>
             <Label fx:id="alertLabel" alignment="CENTER" contentDisplay="TOP" prefHeight="18.0" prefWidth="579.0" text="PLACEHOLDER ALERT TEXT" />
