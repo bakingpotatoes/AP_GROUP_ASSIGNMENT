@@ -171,14 +171,31 @@ public final class DataStore {
         List<String> bookingData = null;
         for (String line : readDataLines(bookingsFile)) {
             if (line.contains("# ref")) continue;
-            bookingData = (bookingId.equalsIgnoreCase(line.split("\\s*\\|\\s*")[0])) 
-                    ? new ArrayList<>(Arrays.asList(line.split("\\s*\\|\\s*"))) : null;
+            String[] lineParts = line.split("\\s*\\|\\s*");
+            System.out.println(bookingId.equalsIgnoreCase(lineParts[0]));
+            if (bookingId.equalsIgnoreCase(lineParts[0])) {
+                bookingData = new ArrayList<>(Arrays.asList(line.split("\\s*\\|\\s*")));
+                break;
+            }
         }
         
         //no such booking id found
-        if (bookingData == null) return null;
+        int deleted;
         
-        delete(bookingsFile, bookingId);
+        //only allows deletion attempt if the booking existed in the first place
+        if (bookingData != null) {
+            //performing deletion, then checking if the deletion was successful
+            // if the deletion failed (deleted = 1), the whole operation will be aborted and the bookingData will be returned to null
+            deleted = delete(bookingsFile, bookingId);
+            if (deleted == 1)  {
+                System.out.println("[ERROR] Unable to delete the booking entry with # ref : %s, ABORTING DELETION TOOL CALL".formatted(bookingId));
+                bookingData = null;
+            }
+        } else {
+            System.out.println("[ERROR] No such booking with ID %s, ABORTING DELETION TOOL CALL".formatted(bookingId));
+        }
+        
+        
         
         return bookingData;
     }
@@ -230,33 +247,38 @@ public final class DataStore {
         //getting all the original lines from the target file...
         List<String> lines = readDataLines(file);
         
+        
         //store only the header row (assuming there is only one line)
-        String[] dataLines = new String[lines.size() - 1];
         String headerLine = lines.get(0);
         List<String> headerAttributes = new ArrayList<>(Arrays.asList(headerLine.split("\\s*\\|\\s*")));
+        System.out.println("\n\n" + headerAttributes + "\n\n");
         
         //store only the data rows (exclude header line) (initialisatino)
         String[][] dataMatrix = new String[lines.size() - 1][headerAttributes.size()];
         for (int row = 1; row < lines.size(); row++) {
             //populating the matrix...
-            dataMatrix[row] = lines.get(row).split("\\s*\\|\\s*");
+            dataMatrix[row - 1] = lines.get(row).split("\\s*\\|\\s*");
             
             //assuming that we maintained "# ref" as the first field of each and every data text store
             //will commence the "deletion" here, first check dataMatrix[row][0] (# ref) for the correct data row, then append *DELETED* to REF_ID (*DELETED* REF_ID)
-            if (dataMatrix[row][0].equalsIgnoreCase(ref)) {
-                dataMatrix[row][0] = "*DELETED* " + dataMatrix[row][0];
+            System.out.println("SCANNING BOOKING ID: %s".formatted(dataMatrix[row - 1][0]));
+            if (dataMatrix[row - 1][0].equalsIgnoreCase(ref)) {
+                System.out.println("FOUND THE BOOKING");
+                dataMatrix[row - 1][0] = "*DELETED* " + dataMatrix[row - 1][0];
 
-                //join the columns in the matrix back together with " | "...
-                for (String dataLine : dataLines) {
-                    dataLine = String.join(" | ", dataMatrix[row]);
+                //join the columns in the dataMatrix back together with " | ",
+                //later on, with each row being joined together with "\n" (not done here yet)
+                List<String> newDataLines = new ArrayList<>();
+                for (String[] dataMatrixRow : dataMatrix) {
+                    newDataLines.add(String.join(" | ", dataMatrixRow));
                 }
+                //this part joins each row with a newline escape character
+                String newDataLinesFullString = String.join("\n", newDataLines);
                 
                 //finally, clear the file, and rewrite to it using append(...)
                 clear(file);
                 append(file, headerLine); //first appending the header...
-                for (String dataLine : dataLines) {
-                    append(file, dataLine);
-                }
+                append(file, newDataLinesFullString);
                 
                 return 0; //0 means successfully deleted
             }

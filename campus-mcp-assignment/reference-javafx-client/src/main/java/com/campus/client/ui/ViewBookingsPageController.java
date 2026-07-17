@@ -78,7 +78,7 @@ public class ViewBookingsPageController implements Initializable {
                 //splitting the raw text into entries (delimited by " | ")
                 String[] rawBookingsParts = rawBookingsText.split("\\n");
                 
-                System.out.println("\n\n" + String.join("\n", rawBookingsParts) + "\n\n");
+//                System.out.println("\n\n" + String.join("\n", rawBookingsParts) + "\n\n");
                 
                 for (String rawBookingPart : rawBookingsParts) {
                     String[] parts = rawBookingPart.split("\\s*\\|\\s*");
@@ -108,7 +108,7 @@ public class ViewBookingsPageController implements Initializable {
                     ));
                 }
                 
-                System.out.println("\n\n" + allBookings + "\n\n");
+//                System.out.println("\n\n" + allBookings + "\n\n");
                 
                 Platform.runLater(() -> {
                     //add the BookingBlocks to the scene in javafx (accessing BookingBlock's instance UI member)
@@ -260,6 +260,6 @@ class BookingBlock {
             System.out.println("\n\n" + ViewBookingsPageController.mcp.callTool("cancel_booking", Map.of("booking_id", this.bookingId.toUpperCase())) + "\n\n");
             App.setRoot("ViewBookingsPage");
         });
-    }
+    } 
     
 }
