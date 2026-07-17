@@ -111,6 +111,15 @@ public class ViewBookingsPageController implements Initializable {
 //                System.out.println("\n\n" + allBookings + "\n\n");
                 
                 Platform.runLater(() -> {
+                    //first checks if it is empty, prompts the user to make a booking first
+                    if (allBookingBlocks.isEmpty()) {
+                        alertLabel.setStyle("-fx-text-fill: red;");
+                        alertLabel.setText("No Bookings have been made yet, please click on \"Create Booking\" to make one first");
+                    } else {
+                        alertLabel.setStyle("-fx-text-fill: black;");
+                        alertLabel.setText("Total Bookings: %d".formatted(allBookingBlocks.size()));
+                    }
+                    
                     //add the BookingBlocks to the scene in javafx (accessing BookingBlock's instance UI member)
                     for (BookingBlock bb : allBookingBlocks) {
                         bookingsVBox.getChildren().add(bb.UI);
@@ -257,6 +266,7 @@ class BookingBlock {
      */
     private void deleteBbUi() {
         ViewBookingsPageController.bookingDataStoreWorker.submit(() -> {
+            //calls the delete tool
             System.out.println("\n\n" + ViewBookingsPageController.mcp.callTool("cancel_booking", Map.of("booking_id", this.bookingId.toUpperCase())) + "\n\n");
             App.setRoot("ViewBookingsPage");
         });

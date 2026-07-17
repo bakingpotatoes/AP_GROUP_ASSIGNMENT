@@ -245,45 +245,34 @@ public final class DataStore {
     //CREATED BY KEITH
     private int delete(Path file, String ref) {
         //getting all the original lines from the target file...
-        List<String> lines = readDataLines(file);
+        String headerLine = readHeaderLine(file);
+        List<String> dataLines = readDataLines(file);
+        List<String> newDataLines = new ArrayList<>();
         
-        
-        //store only the header row (assuming there is only one line)
-        String headerLine = lines.get(0);
-        List<String> headerAttributes = new ArrayList<>(Arrays.asList(headerLine.split("\\s*\\|\\s*")));
-        System.out.println("\n\n" + headerAttributes + "\n\n");
-        
-        //store only the data rows (exclude header line) (initialisatino)
-        String[][] dataMatrix = new String[lines.size() - 1][headerAttributes.size()];
-        for (int row = 1; row < lines.size(); row++) {
-            //populating the matrix...
-            dataMatrix[row - 1] = lines.get(row).split("\\s*\\|\\s*");
+        //begins scanning of dataLines to find the one with the correct # ref
+        int deletedStatus = 1;
+        for (String line : dataLines) {
             
-            //assuming that we maintained "# ref" as the first field of each and every data text store
-            //will commence the "deletion" here, first check dataMatrix[row][0] (# ref) for the correct data row, then append *DELETED* to REF_ID (*DELETED* REF_ID)
-            System.out.println("SCANNING BOOKING ID: %s".formatted(dataMatrix[row - 1][0]));
-            if (dataMatrix[row - 1][0].equalsIgnoreCase(ref)) {
-                System.out.println("FOUND THE BOOKING");
-                dataMatrix[row - 1][0] = "*DELETED* " + dataMatrix[row - 1][0];
-
-                //join the columns in the dataMatrix back together with " | ",
-                //later on, with each row being joined together with "\n" (not done here yet)
-                List<String> newDataLines = new ArrayList<>();
-                for (String[] dataMatrixRow : dataMatrix) {
-                    newDataLines.add(String.join(" | ", dataMatrixRow));
-                }
-                //this part joins each row with a newline escape character
-                String newDataLinesFullString = String.join("\n", newDataLines);
-                
-                //finally, clear the file, and rewrite to it using append(...)
-                clear(file);
-                append(file, headerLine); //first appending the header...
-                append(file, newDataLinesFullString);
-                
-                return 0; //0 means successfully deleted
+            //extrapolating the columns from each dataLines' row
+            String[] lineParts = line.split("\\s*\\|\\s*");
+            if (lineParts[0].equalsIgnoreCase(ref)) {
+                deletedStatus = 0; //successfully found the row, commencingg deletion
+                //adding the *DELETED* prefix to the row
+                lineParts[0] = "*DELETED* " + lineParts[0];
             }
+            //rejoining the lineParts back together, and then inserting them into newDataLines
+            newDataLines.add(String.join(" | ", lineParts));
         }
-        return 1; //1 means not found, don't change anything in the file...
+        
+        //parsing the newDataLines into a string
+        String newDataFullString = String.join("\n", newDataLines);
+        
+        //clearing then reappending the whole file
+        clear(file);
+        append(file, headerLine); //appending the header separately (gives us a new line)
+        append(file, newDataFullString); //appending the datarows separately (the final row will ONLY NOW have an \n)
+        
+        return deletedStatus;
     }
     
     
@@ -330,6 +319,22 @@ public final class DataStore {
                 }
             }
             return lines;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    
+    private String readHeaderLine(Path file) {
+        try {
+            String headerLine = null;
+            for (String l : Files.readAllLines(file, StandardCharsets.UTF_8)) {
+                if (l.startsWith("#")) {
+                    headerLine = l;
+                    break;
+                }
+            }
+            
+            return headerLine;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
