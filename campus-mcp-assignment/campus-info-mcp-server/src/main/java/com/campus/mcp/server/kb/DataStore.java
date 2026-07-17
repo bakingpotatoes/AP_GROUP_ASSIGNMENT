@@ -210,7 +210,8 @@ public final class DataStore {
     public synchronized List<Map<String, String>> getAllBookings() {
         List<Map<String,String>> out = new ArrayList<>();
         for (String line : readDataLines(bookingsFile)) {
-            if (line.contains("# ref")) continue;
+            if (line.contains("# ref")) continue; //ignores the header
+            else if (line.toLowerCase().contains("*deleted*")) continue; //ignores the deleted data rows
             
             String[] parts = line.split("\\s*\\|\\s*");
             Map<String, String> bookingDataRow = new HashMap<>(Map.of(
@@ -313,7 +314,7 @@ public final class DataStore {
         try {
             List<String> lines = new ArrayList<>();
             for (String l : Files.readAllLines(file, StandardCharsets.UTF_8)) {
-                if (l.toLowerCase().contains("*deleted*")) continue; //ignores deleted data
+//                if (l.toLowerCase().contains("*deleted*")) continue; //ignores deleted data
                 if (!l.isBlank() && !l.startsWith("#")) {
                     lines.add(l);
                 }
