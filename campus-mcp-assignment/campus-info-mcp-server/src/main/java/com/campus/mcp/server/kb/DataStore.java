@@ -205,7 +205,7 @@ public final class DataStore {
      *  Gets all the bookings
      * 
      *  returns an arraylist of map objects (map of attribute to value) for easier indexing later
-     *  returns null if no bookings were found
+     *  returns empty list if no bookings were found
      */
     public synchronized List<Map<String, String>> getAllBookings() {
         List<Map<String,String>> out = new ArrayList<>();
@@ -313,7 +313,6 @@ public final class DataStore {
         try {
             List<String> lines = new ArrayList<>();
             for (String l : Files.readAllLines(file, StandardCharsets.UTF_8)) {
-//                if (l.toLowerCase().contains("*deleted*")) continue; //ignores deleted data
                 if (!l.isBlank() && !l.startsWith("#")) {
                     lines.add(l);
                 }
@@ -324,6 +323,10 @@ public final class DataStore {
         }
     }
     
+    /**
+     *  Returns a single string with the header of that file (assuming it has a header in the first place)
+     * 
+     */
     private String readHeaderLine(Path file) {
         try {
             String headerLine = null;
