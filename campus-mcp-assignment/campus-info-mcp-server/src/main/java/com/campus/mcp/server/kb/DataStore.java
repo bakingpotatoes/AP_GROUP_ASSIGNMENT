@@ -226,7 +226,6 @@ public final class DataStore {
             out.add(bookingDataRow);
         }
         
-        out = (out.isEmpty()) ? null : out;
         return out;
     }
 

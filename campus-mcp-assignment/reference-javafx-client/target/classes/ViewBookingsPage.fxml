@@ -26,7 +26,7 @@
                   <VBox fx:id="bookingsVBox" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="700.0" prefWidth="700.0" spacing="30.0" />
                </content>
             </ScrollPane>
-            <Label fx:id="alertLabel" alignment="CENTER" contentDisplay="TOP" prefHeight="18.0" prefWidth="579.0" text="PLACEHOLDER ALERT TEXT" />
+            <Label fx:id="alertLabel" alignment="CENTER" contentDisplay="TOP" prefHeight="18.0" prefWidth="579.0" text="PLACEHOLDER TEXT" textFill="RED" />
             <Button fx:id="createNewBookingButton" mnemonicParsing="false" text="Create New Booking" />
          </children>
       </VBox>

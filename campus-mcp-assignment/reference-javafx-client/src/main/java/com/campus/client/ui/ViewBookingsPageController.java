@@ -74,11 +74,20 @@ public class ViewBookingsPageController implements Initializable {
         bookingDataStoreWorker.submit(() -> {
             try {
                 //The raw string that the CampusTool method returns (has \n delimiters)
+                //if "empty", it will just not have any pipe | delimiters
                 String rawBookingsText = mcp.callTool("get_student_room_bookings", Map.of("student_id", LoginPageController.studentId.toUpperCase()));
                 //splitting the raw text into entries (delimited by " | ")
                 String[] rawBookingsParts = rawBookingsText.split("\\n");
                 
-//                System.out.println("\n\n" + String.join("\n", rawBookingsParts) + "\n\n");
+                //tests if there are any entries
+                if (!rawBookingsText.contains(" | ")) {
+                    Platform.runLater(() -> {
+                        alertLabel.setStyle("-fx-text-fill: red;");
+                        alertLabel.setText("No Bookings have been made yet, please click on \"Create Booking\" to make one first");
+                    });
+                    return;
+                }
+                
                 
                 for (String rawBookingPart : rawBookingsParts) {
                     String[] parts = rawBookingPart.split("\\s*\\|\\s*");
@@ -111,14 +120,8 @@ public class ViewBookingsPageController implements Initializable {
 //                System.out.println("\n\n" + allBookings + "\n\n");
                 
                 Platform.runLater(() -> {
-                    //first checks if it is empty, prompts the user to make a booking first
-                    if (allBookingBlocks.isEmpty()) {
-                        alertLabel.setStyle("-fx-text-fill: red;");
-                        alertLabel.setText("No Bookings have been made yet, please click on \"Create Booking\" to make one first");
-                    } else {
-                        alertLabel.setStyle("-fx-text-fill: black;");
-                        alertLabel.setText("Total Bookings: %d".formatted(allBookingBlocks.size()));
-                    }
+                    alertLabel.setStyle("-fx-text-fill: black;");
+                    alertLabel.setText("Total Bookings: %d".formatted(allBookingBlocks.size()));
                     
                     //add the BookingBlocks to the scene in javafx (accessing BookingBlock's instance UI member)
                     for (BookingBlock bb : allBookingBlocks) {
@@ -178,7 +181,6 @@ class BookingBlock {
     *   Creates new blocks each containing information about each booking under the student
     *   adds the new bookings to the allBookingBlocks list
     * 
-    *   TESTING
     */
     private Pane createBbUi() {
         // 1. Root Container (Top-to-Bottom flow)
